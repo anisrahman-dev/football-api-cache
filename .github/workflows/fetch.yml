@@ -42,9 +42,21 @@ jobs:
             "https://api.football-data.org/v4/competitions/PL/scorers?limit=20" \
             -o scorers.json
 
+      - name: Fetch Teams Data
+        run: |
+          curl -H "X-Auth-Token: ${{ secrets.FOOTBALL_API_KEY }}" \
+            "https://api.football-data.org/v4/competitions/PL/teams" \
+            -o teams.json
+
+      - name: Fetch Competition Data
+        run: |
+          curl -H "X-Auth-Token: ${{ secrets.FOOTBALL_API_KEY }}" \
+            "https://api.football-data.org/v4/competitions/PL" \
+            -o competition.json
+
       - name: Commit and push if changed
         run: |
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
-          git add matches.json standings.json scorers.json
+          git add matches.json standings.json scorers.json teams.json competition.json
           git diff --quiet && git diff --staged --quiet || (git commit -m "Update football data - $(date '+%Y-%m-%d %H:%M:%S')" && git push)
