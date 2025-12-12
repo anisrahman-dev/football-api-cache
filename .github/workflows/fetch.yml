@@ -3,40 +3,45 @@ name: Fetch Football Data
 on:
   schedule:
     # Runs every 5 minutes
-    - cron: "*/5 * * * *"
+    - cron: '*/5 * * * *'
   # Allows manual trigger
   workflow_dispatch:
+
+# Add permissions for the workflow
+permissions:
+  contents: write
 
 jobs:
   fetch-and-update:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Fetch Matches Data
         run: |
           curl -H "X-Auth-Token: ${{ secrets.FOOTBALL_API_KEY }}" \
             "https://api.football-data.org/v4/matches?competitions=PL" \
             -o matches.json
-
+      
       - name: Fetch Standings Data
         run: |
           curl -H "X-Auth-Token: ${{ secrets.FOOTBALL_API_KEY }}" \
             "https://api.football-data.org/v4/competitions/PL/standings" \
             -o standings.json
-
+      
       - name: Fetch Top Scorers Data
         run: |
           curl -H "X-Auth-Token: ${{ secrets.FOOTBALL_API_KEY }}" \
             "https://api.football-data.org/v4/competitions/PL/scorers?limit=20" \
             -o scorers.json
-
+      
       - name: Commit and push if changed
         run: |
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
           git add matches.json standings.json scorers.json
           git diff --quiet && git diff --staged --quiet || (git commit -m "Update football data - $(date '+%Y-%m-%d %H:%M:%S')" && git push)
-
