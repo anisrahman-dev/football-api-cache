@@ -3,7 +3,7 @@ name: Fetch Football Data
 on:
   schedule:
     # Runs every 5 minutes
-    - cron: '*/5 * * * *'
+    - cron: "*/5 * * * *"
   # Allows manual trigger
   workflow_dispatch:
 
@@ -14,31 +14,34 @@ permissions:
 jobs:
   fetch-and-update:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Fetch Matches Data
+
+      - name: Fetch Matches Data (30 days range)
         run: |
+          # Get matches from 7 days ago to 30 days in the future
+          DATE_FROM=$(date -u -d '7 days ago' '+%Y-%m-%d' 2>/dev/null || date -u -v-7d '+%Y-%m-%d')
+          DATE_TO=$(date -u -d '30 days' '+%Y-%m-%d' 2>/dev/null || date -u -v+30d '+%Y-%m-%d')
           curl -H "X-Auth-Token: ${{ secrets.FOOTBALL_API_KEY }}" \
-            "https://api.football-data.org/v4/matches?competitions=PL" \
+            "https://api.football-data.org/v4/competitions/PL/matches?dateFrom=${DATE_FROM}&dateTo=${DATE_TO}" \
             -o matches.json
-      
+
       - name: Fetch Standings Data
         run: |
           curl -H "X-Auth-Token: ${{ secrets.FOOTBALL_API_KEY }}" \
             "https://api.football-data.org/v4/competitions/PL/standings" \
             -o standings.json
-      
+
       - name: Fetch Top Scorers Data
         run: |
           curl -H "X-Auth-Token: ${{ secrets.FOOTBALL_API_KEY }}" \
             "https://api.football-data.org/v4/competitions/PL/scorers?limit=20" \
             -o scorers.json
-      
+
       - name: Commit and push if changed
         run: |
           git config user.name "GitHub Action"
